@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.database import Base
@@ -105,3 +105,47 @@ class SupportTicket(Base):
     customer: Mapped["Customer"] = relationship(
         back_populates="tickets"
     )
+
+
+class AnalyticsEvent(Base):
+
+    __tablename__ = "analytics_events"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True
+    )
+
+    conversation_id: Mapped[str] = mapped_column(
+        String(100)
+    )
+
+    prompt: Mapped[str] = mapped_column(
+        Text
+    )
+
+    intent: Mapped[str] = mapped_column(
+        String(50)
+    )
+
+    sentiment: Mapped[str] = mapped_column(
+        String(20)
+    )
+
+    priority: Mapped[str] = mapped_column(
+        String(20)
+    )
+
+    response_time: Mapped[float] = mapped_column(
+        Float
+    )
+
+    escalated: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow
+    )
+

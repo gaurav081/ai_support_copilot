@@ -1,3 +1,5 @@
+import time
+
 from fastapi import FastAPI
 
 from app.config import settings
@@ -7,6 +9,11 @@ from app.schemas import (
     ChatResponse,
     MessageAnalysisResponse,
     Source
+)
+from app.services.analytics import (
+    get_analytics,
+    get_metrics,
+    record_analytics
 )
 from app.services.classifier import analyze_message
 from app.services.escalation import (
@@ -42,6 +49,26 @@ def load_hybrid_retriever() -> HybridRetriever:
     )
 
 
+def save_analytics(
+    request: ChatRequest,
+    analysis,
+    start_time: float,
+    escalated: bool
+) -> None:
+
+    response_time = time.perf_counter() - start_time
+
+    record_analytics(
+        conversation_id=request.conversation_id,
+        prompt=request.prompt,
+        intent=analysis.intent,
+        sentiment=analysis.sentiment,
+        priority=analysis.priority,
+        response_time=response_time,
+        escalated=escalated
+    )
+
+
 @app.get("/")
 def root():
 
@@ -59,12 +86,26 @@ def health_check():
         "status": "healthy"
     }
 
+@app.get("/analytics")
+def analytics():
+
+    return {
+        "events": get_analytics()
+    }
+
+@app.get("/analytics/metrics")
+def analytics_metrics():
+
+    return get_metrics()
+    
 
 @app.post(
     "/chat",
     response_model=ChatResponse
 )
 def chat(request: ChatRequest):
+
+    start_time = time.perf_counter()
 
     if request.conversation_id not in conversations:
 
@@ -106,6 +147,13 @@ def chat(request: ChatRequest):
             answer
         )
 
+        save_analytics(
+            request,
+            analysis,
+            start_time,
+            escalated=True
+        )
+
         return ChatResponse(
             prompt=request.prompt,
             response=answer,
@@ -138,6 +186,13 @@ def chat(request: ChatRequest):
             answer
         )
 
+        save_analytics(
+            request,
+            analysis,
+            start_time,
+            escalated=False
+        )
+
         return ChatResponse(
             prompt=request.prompt,
             response=answer,
@@ -165,6 +220,13 @@ def chat(request: ChatRequest):
         memory.add_message(
             "assistant",
             answer
+        )
+
+        save_analytics(
+            request,
+            analysis,
+            start_time,
+            escalated=False
         )
 
         return ChatResponse(
@@ -198,6 +260,13 @@ def chat(request: ChatRequest):
         answer = (
             "I don't have enough information "
             "in the knowledge base to answer that."
+        )
+
+        save_analytics(
+            request,
+            analysis,
+            start_time,
+            escalated=False
         )
 
         return ChatResponse(
@@ -242,6 +311,13 @@ def chat(request: ChatRequest):
         for result in results
     ]
 
+    save_analytics(
+        request,
+        analysis,
+        start_time,
+        escalated=False
+    )
+
     return ChatResponse(
         prompt=request.prompt,
         response=answer,
@@ -252,4 +328,3 @@ def chat(request: ChatRequest):
         ),
         sources=sources
     )
-

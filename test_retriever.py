@@ -1,42 +1,21 @@
-from app.ingestion.html_loader import load_html
-from app.ingestion.chunker import chunk_text
-from app.services.embeddings import generate_embedding
-from app.vector_store.faiss_store import FAISSVectorStore
-from app.retrieval.retriever import Retriever
+from app.services.rag import load_retriever
+from app.retrieval.hybrid_retriever import HybridRetriever
 
 
-document_path = "data/documents/shopify_returns.html"
+def test_retriever():
+    vector_store = load_retriever()
+    documents = vector_store.documents
 
-text = load_html(document_path)
-chunks = chunk_text(text)
+    retriever = HybridRetriever(
+        vector_store,
+        documents
+    )
 
-embeddings = [
-    generate_embedding(chunk)
-    for chunk in chunks
-]
+    results = retriever.retrieve(
+        "How can I return an item?",
+        top_k=3
+    )
 
-store = FAISSVectorStore(
-    dimension=len(embeddings[0])
-)
-
-store.add(
-    embeddings,
-    chunks
-)
-
-retriever = Retriever(store)
-
-query = "How can I return an item?"
-
-results = retriever.retrieve(
-    query,
-    top_k=3
-)
-
-print("\nSearch results:")
-
-for i, result in enumerate(results, start=1):
-    print(f"\n--- Result {i} ---")
-    print("Distance:", result["distance"])
-    print("Document:")
-    print(result["document"])
+    assert len(results) > 0
+    assert "document" in results[0]
+    assert "score" in results[0]

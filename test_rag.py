@@ -1,16 +1,20 @@
-from app.services.rag import answer_question
+from app.services.rag import load_retriever
+from app.retrieval.hybrid_retriever import HybridRetriever
 
 
-question = "How can I return an item?"
+def test_rag_retrieval():
+    vector_store = load_retriever()
+    documents = vector_store.documents
 
-result = answer_question(question)
+    retriever = HybridRetriever(
+        vector_store,
+        documents
+    )
 
-print("\nAnswer:")
-print(result["answer"])
+    results = retriever.retrieve(
+        "How can I return an item?",
+        top_k=3
+    )
 
-print("\nSources:")
-
-for i, source in enumerate(result["sources"], start=1):
-    print(f"\n--- Source {i} ---")
-    print("Distance:", source["distance"])
-    print(source["document"])
+    assert len(results) > 0
+    assert results[0]["document"]["source"] == "shopify_returns.html"

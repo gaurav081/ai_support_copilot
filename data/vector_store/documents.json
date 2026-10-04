@@ -1,0 +1,14 @@
+[
+  {
+    "text": "Shipping Policy\n\nStandard shipping usually takes 5 to 7 business days.\n\nTracking an order\n\nCustomers can track their orders from the Orders page\n      using the tracking information provided after shipment.\n\nDelayed shipments\n\nIf an order has not arrived within the expected delivery\n      period, customers should contact support for assistance.",
+    "source": "shipping.html",
+    "chunk_id": 0,
+    "document_id": "shipping_0"
+  },
+  {
+    "text": "Returns and exchanges\n\nYou can manage returns and exchanges from the Orders page in your Shopify admin. When customers want to return items, you can create a return, send shipping instructions, and issue refunds after inspecting the returned items.\n\nReturns usually involve the following actions:\n\nRefund : Send the full or partial payment amount back to a customer.\n\nReturn : Receive an item back from a customer, with optional return shipping labels and tracking.\n\nExchange : Send a customer an alternative item as part of the return, such as a different size or color.\n\nYou can also activate self-serve returns and cancellations so customers can submit return or cancellation requests directly from their order status page. Customers can request to return delivered items, or cancel unfulfilled items before they ship. Return and cancellation rules let you control which items are eligible and how long customers have to make a request.",
+    "source": "shopify_returns.html",
+    "chunk_id": 0,
+    "document_id": "shopify_returns_0"
+  }
+]

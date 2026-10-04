@@ -44,6 +44,7 @@ def load_hybrid_retriever() -> HybridRetriever:
 
 @app.get("/")
 def root():
+
     return {
         "message": "AI Support Copilot API",
         "environment": settings.app_env,
@@ -53,6 +54,7 @@ def root():
 
 @app.get("/health")
 def health_check():
+
     return {
         "status": "healthy"
     }
@@ -77,10 +79,6 @@ def chat(request: ChatRequest):
     analysis = analyze_message(
         request.prompt
     )
-
-    # -------------------------
-    # High-priority escalation
-    # -------------------------
 
     if should_escalate(
         analysis.priority,
@@ -118,11 +116,10 @@ def chat(request: ChatRequest):
             sources=[]
         )
 
-    # -------------------------
-    # Order-related tool calling
-    # -------------------------
-
-    if analysis.intent == "order_status":
+    if (
+        analysis.intent == "order_status"
+        and "ORD" in request.prompt.upper()
+    ):
 
         answer = run_tool_calling(
             message=request.prompt,
@@ -150,16 +147,12 @@ def chat(request: ChatRequest):
             sources=[]
         )
 
-    # -------------------------
-    # Hybrid RAG retrieval
-    # -------------------------
-
     retriever = load_hybrid_retriever()
 
     results = retriever.retrieve(
-    request.prompt,
-    top_k=3
-   )
+        request.prompt,
+        top_k=3
+    )
 
     results = [
         result

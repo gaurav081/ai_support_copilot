@@ -1,3 +1,4 @@
+
 import json
 
 import ollama
@@ -156,7 +157,12 @@ def run_tool_calling(
                 "customer, order, or support-ticket information. "
                 "Do not invent database information. "
                 "Create a support ticket when the customer "
-                "clearly needs human assistance."
+                "clearly needs human assistance. "
+                "When a tool returns data, treat that data as "
+                "the only source of truth for the tool-related "
+                "answer. Do not add fields, values, tracking "
+                "numbers, dates, carriers, or other details "
+                "that were not returned by the tool."
             )
         }
     ]

@@ -80,6 +80,7 @@ def chat(request: ChatRequest):
         request.prompt
     )
 
+    # High-priority issues that require human support
     if should_escalate(
         analysis.priority,
         analysis.intent
@@ -116,6 +117,7 @@ def chat(request: ChatRequest):
             sources=[]
         )
 
+    # Order-related requests with an actual order number
     if (
         analysis.intent == "order_status"
         and "ORD" in request.prompt.upper()
@@ -147,6 +149,36 @@ def chat(request: ChatRequest):
             sources=[]
         )
 
+    # Customer lookup requests containing an email address
+    if "@" in request.prompt:
+
+        answer = run_tool_calling(
+            message=request.prompt,
+            conversation_history=memory.get_messages()
+        )
+
+        memory.add_message(
+            "user",
+            request.prompt
+        )
+
+        memory.add_message(
+            "assistant",
+            answer
+        )
+
+        return ChatResponse(
+            prompt=request.prompt,
+            response=answer,
+            analysis=MessageAnalysisResponse(
+                intent=analysis.intent,
+                sentiment=analysis.sentiment,
+                priority=analysis.priority
+            ),
+            sources=[]
+        )
+
+    # Knowledge-base retrieval
     retriever = load_hybrid_retriever()
 
     results = retriever.retrieve(
@@ -154,6 +186,7 @@ def chat(request: ChatRequest):
         top_k=3
     )
 
+    # Ignore weak retrieval results
     results = [
         result
         for result in results
@@ -219,3 +252,4 @@ def chat(request: ChatRequest):
         ),
         sources=sources
     )
+

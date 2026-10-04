@@ -3,14 +3,7 @@ def should_escalate(
     intent: str
 ) -> bool:
 
-    if priority != "high":
-        return False
-
-    escalation_intents = {
-        "other"
-    }
-
-    return intent in escalation_intents
+    return priority == "high"
 
 
 def escalate_to_support(

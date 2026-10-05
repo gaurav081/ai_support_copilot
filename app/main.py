@@ -1,6 +1,7 @@
 import time
 
 from fastapi import FastAPI
+from app.database.database import Base, engine
 
 from app.config import settings
 from app.memory.conversation import ConversationMemory
@@ -26,6 +27,7 @@ from app.services.tools import run_tool_calling
 from app.retrieval.hybrid_retriever import HybridRetriever
 from app.vector_store.storage import load_documents
 
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI Support Copilot"

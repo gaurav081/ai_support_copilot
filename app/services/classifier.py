@@ -51,12 +51,28 @@ Priority:
 - medium
 - high
 
-Choose the single best intent.
-Priority should reflect how urgently the support team should
-handle the customer's issue.
-Do not create new labels.
+Classification rules:
+1. Choose the single best intent from the allowed labels.
+2. A direct request for human assistance, a human agent,
+   a live representative, or escalation must be treated as
+   high priority.
+3. Examples of direct human-support requests include:
+   - "I require human assistance"
+   - "I want to talk to a human"
+   - "Please connect me to an agent"
+   - "I need a real person to help me"
+4. For direct human-support requests, use general_question
+   as the intent unless another allowed intent is more appropriate.
+5. High priority should also be used for urgent issues that
+   require prompt support-team attention.
+6. Medium priority is for ordinary support issues.
+7. Low priority is for non-urgent requests.
+8. Sentiment must reflect the customer's expressed emotion.
+   Requesting human assistance alone does not necessarily
+   mean the customer is negative.
+9. Never invent labels or return values outside the
+   specified categories.
 """
-
 
 def analyze_message(message: str) -> MessageAnalysis:
     provider = settings.llm_provider.lower()

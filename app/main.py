@@ -130,7 +130,8 @@ def chat(request: ChatRequest):
     # High-priority issues that require human support
     if should_escalate(
         analysis.priority,
-        analysis.intent
+        analysis.intent,
+        request.prompt
     ):
 
         ticket = escalate_to_support(

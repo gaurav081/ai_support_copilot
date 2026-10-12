@@ -13,6 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_env: str = "development"
+    retrieval_mode: str = "hybrid"
 
  # Keeping Ollama as the default for local development.
     llm_provider: str = "ollama"

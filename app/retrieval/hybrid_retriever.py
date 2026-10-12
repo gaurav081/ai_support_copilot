@@ -1,6 +1,6 @@
 from rank_bm25 import BM25Okapi
 
-from app.services.embeddings import generate_embedding
+from app.config import settings
 from app.vector_store.faiss_store import FAISSVectorStore
 
 
@@ -11,7 +11,6 @@ class HybridRetriever:
         vector_store: FAISSVectorStore,
         documents: list[dict]
     ):
-
         self.vector_store = vector_store
         self.documents = documents
 
@@ -20,9 +19,7 @@ class HybridRetriever:
             for document in documents
         ]
 
-        self.bm25 = BM25Okapi(
-            tokenized_documents
-        )
+        self.bm25 = BM25Okapi(tokenized_documents)
 
     def retrieve(
         self,
@@ -30,34 +27,7 @@ class HybridRetriever:
         top_k: int = 3
     ) -> list[dict]:
 
-        # -------------------------
-        # Semantic retrieval
-        # -------------------------
-
-        query_embedding = generate_embedding(
-            query
-        )
-
-        semantic_results = self.vector_store.search(
-            query_embedding,
-            top_k=len(self.documents)
-        )
-
-        semantic_rank = {}
-
-        for rank, result in enumerate(
-            semantic_results
-        ):
-
-            document_id = result["document"]["document_id"]
-
-            semantic_rank[document_id] = rank
-
-
-        # -------------------------
-        # Keyword retrieval
-        # -------------------------
-
+        # Keyword retrieval using BM25
         tokenized_query = query.lower().split()
 
         bm25_scores = self.bm25.get_scores(
@@ -70,25 +40,49 @@ class HybridRetriever:
             reverse=True
         )
 
-        keyword_rank = {}
+        keyword_rank = {
+            self.documents[index]["document_id"]: rank
+            for rank, index in enumerate(keyword_order)
+        }
 
-        for rank, index in enumerate(
-            keyword_order
-        ):
+        # Keyword-only mode: avoids loading the embedding model.
+        if settings.retrieval_mode == "keyword":
+            results = []
 
-            document_id = self.documents[index]["document_id"]
+            for index in keyword_order[:top_k]:
+                document = self.documents[index]
+                document_id = document["document_id"]
+                keyword_score = 1 / (
+                    1 + keyword_rank[document_id]
+                )
 
-            keyword_rank[document_id] = rank
+                results.append({
+                    "document": document,
+                    "score": keyword_score,
+                    "semantic_score": 0.0,
+                    "keyword_score": keyword_score
+                })
 
+            return results
 
-        # -------------------------
-        # Rank fusion
-        # -------------------------
+        # Hybrid mode: combine semantic and keyword retrieval.
+        from app.services.embeddings import generate_embedding
+
+        query_embedding = generate_embedding(query)
+
+        semantic_results = self.vector_store.search(
+            query_embedding,
+            top_k=len(self.documents)
+        )
+
+        semantic_rank = {
+            result["document"]["document_id"]: rank
+            for rank, result in enumerate(semantic_results)
+        }
 
         results = []
 
         for document in self.documents:
-
             document_id = document["document_id"]
 
             semantic_position = semantic_rank.get(
@@ -101,13 +95,8 @@ class HybridRetriever:
                 len(self.documents)
             )
 
-            semantic_score = 1 / (
-                1 + semantic_position
-            )
-
-            keyword_score = 1 / (
-                1 + keyword_position
-            )
+            semantic_score = 1 / (1 + semantic_position)
+            keyword_score = 1 / (1 + keyword_position)
 
             hybrid_score = (
                 0.7 * semantic_score
@@ -120,7 +109,6 @@ class HybridRetriever:
                 "semantic_score": semantic_score,
                 "keyword_score": keyword_score
             })
-
 
         results.sort(
             key=lambda result: result["score"],

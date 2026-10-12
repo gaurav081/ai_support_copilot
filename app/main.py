@@ -5,6 +5,9 @@ from app.database.database import Base, engine
 
 from app.config import settings
 from app.memory.conversation import ConversationMemory
+
+from seed_database import seed_database
+
 from app.schemas import (
     ChatRequest,
     ChatResponse,
@@ -27,7 +30,8 @@ from app.services.tools import run_tool_calling
 from app.retrieval.hybrid_retriever import HybridRetriever
 from app.vector_store.storage import load_documents
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
+seed_database()
 
 app = FastAPI(
     title="AI Support Copilot"
